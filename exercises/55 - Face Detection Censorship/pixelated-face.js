@@ -1,17 +1,23 @@
 const video = document.querySelector('.webcam');
+
 const canvas = document.querySelector('.video');
 const ctx = canvas.getContext('2d');
+
 const faceCanvas = document.querySelector('.face');
 const faceCtx = faceCanvas.getContext('2d');
+
 const faceDetector = new window.FaceDetector();
-const optionsInputs = document.querySelectorAll(
-  '.controls input[type="range"]'
-);
+const SIZE = 10;
+const SCALE = 1.35;
 
 const options = {
   SIZE: 10,
-  SCALE: 1.35,
+  SCALE: 1.35
 };
+
+const optionsInputs = document.querySelectorAll(
+  '.controls input[type="range"]'
+);
 
 function handleOption(event) {
   const { value, name } = event.currentTarget;
@@ -19,15 +25,17 @@ function handleOption(event) {
 }
 optionsInputs.forEach(input => input.addEventListener('input', handleOption));
 
-// Write a fucntion that will populate the users video
+console.log(video, canvas, faceCanvas, faceDetector);
+
+// write a function that will populate the users video
+
 async function populateVideo() {
   const stream = await navigator.mediaDevices.getUserMedia({
-    video: { width: 1280, height: 720 },
+    video: { width: 1920, height: 1080 }
   });
   video.srcObject = stream;
   await video.play();
   // size the canvases to be the same size as the video
-  console.log(video.videoWidth, video.videoHeight);
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   faceCanvas.width = video.videoWidth;
@@ -36,6 +44,7 @@ async function populateVideo() {
 
 async function detect() {
   const faces = await faceDetector.detect(video);
+  console.log(faces);
   // ask the browser when the next animation frame is, and tell it to run detect for us
   faces.forEach(drawFace);
   faces.forEach(censor);
@@ -48,11 +57,12 @@ function drawFace(face) {
   ctx.strokeStyle = '#ffc600';
   ctx.lineWidth = 2;
   ctx.strokeRect(left, top, width, height);
+  console.log({ width, height, top, left });
 }
 
 function censor({ boundingBox: face }) {
   faceCtx.imageSmoothingEnabled = false;
-  faceCtx.clearRect(0, 0, faceCanvas.width, faceCanvas.height);
+  faceCtx.clearRect(0, 0, faceCanvas.width, faceCanvas.height); // comment out for trippy FX!!!
   // draw the small face
   faceCtx.drawImage(
     // 5 source args
@@ -71,13 +81,14 @@ function censor({ boundingBox: face }) {
 
   const width = face.width * options.SCALE;
   const height = face.height * options.SCALE;
+
   faceCtx.drawImage(
     faceCanvas, // source
     face.x, // where do we start the source pull from?
     face.y,
     options.SIZE,
     options.SIZE,
-    // Drawing args
+    // drawing args
     face.x - (width - face.width) / 2,
     face.y - (height - face.height) / 2,
     width,
